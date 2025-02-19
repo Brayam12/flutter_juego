@@ -9,40 +9,41 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-
+  // Posición inicial del pájaro en el eje Y
   static double birdYaxis = 0;
-  double time = 0;
-  double height = 0;
-  double initialHeight = birdYaxis;
-  bool gameHasStarted = false;
-  static double barrierXuno = 1;
-  double barrierXdos = barrierXuno + 1.5;
+  double time = 0; //Variable para calcular el movimiento del pajaro
+  double height = 0; //Variable para calcular la altura del pajaro
+  double initialHeight = birdYaxis; //Guarda la altura inicial del pájaro antes del salto
+  bool gameHasStarted = false; //Variable para saber si el juego ha comenzado
+  static double barrierXuno = 1; //Posición inicial de la primera barrera en el eje X
+  double barrierXdos = barrierXuno + 1.5; //Posición inicial de la segunda barrera en el eje X
+  int puntuacion = 0; // Variable para la puntuación
 
+  // Dimensiones del pájaro y los obstáculos
+  static double birdWidth = 0.08; //Ancho del pajaro
+  static double birdHeight = 0.8; //Alto del pajaro
+  static double barrierWidth = .5; //Ancho de la barrera
+  static double barrierHeight = .6; //Alto de la barrera
 
-  static double birdWidth = 0.08;
-  static double birdHeight = 0.8;
-  static double barrierWidth = .5;
-  static double barrierHeight = .6;
-
-
+  // Método para hacer que el pájaro salte
   void jump() {
     setState(() {
-      time = 0;
-      initialHeight = birdYaxis;
+      time = 0; //Reinicia el tiempo para calcular la nueva altura
+      initialHeight = birdYaxis; //Guarda la posición actual como punto de partida
     });
   }
 
-
+  // Método para verificar si el pájaro ha colisionado con los obstáculos
   bool checkCollision() {
-    
-    double birdLeft = -birdWidth / 2;
-    double birdRight = birdWidth / 2;
-    double birdTop = birdYaxis - birdHeight / 2;
-    double birdBottom = birdYaxis + birdHeight / 2;
+    // Definir los límites del pájaro
+    double birdLeft = -birdWidth / 2; //Límite izquierdo del pájaro
+    double birdRight = birdWidth / 2; //Límite derecho del pájaro
+    double birdTop = birdYaxis - birdHeight / 2; //Límite superior del pájaro
+    double birdBottom = birdYaxis + birdHeight / 2; //Límite inferior del pájaro
 
-    
-    bool collisionWithBarrier(double barrierX, double barrierY) {
-      double barrierLeft = barrierX - barrierWidth / 2;
+    // Función para verificar colisión con un obstáculo
+    bool collisionWithBarrier(double barrierX, double barrierY) { 
+      double barrierLeft = barrierX - barrierWidth / 2; 
       double barrierRight = barrierX + barrierWidth / 2;
       double barrierTop = barrierY - barrierHeight / 2;
       double barrierBottom = barrierY + barrierHeight / 2;
@@ -53,27 +54,36 @@ class _HomepageState extends State<Homepage> {
           birdTop < barrierBottom;
     }
 
-    
-    if (collisionWithBarrier(barrierXuno, -1.1) ||
-        collisionWithBarrier(barrierXuno, 1.1) || 
-        collisionWithBarrier(barrierXdos, -1.1) ||
-        collisionWithBarrier(barrierXdos, 1.1)) 
-        {
-      return true;
+    // Verificar colisión con cada obstáculo
+    if (collisionWithBarrier(barrierXuno, -1.1) || // Obstáculo superior 1
+        collisionWithBarrier(barrierXuno, 1.1) ||  // Obstáculo inferior 1
+        collisionWithBarrier(barrierXdos, -1.1) || // Obstáculo superior 2
+        collisionWithBarrier(barrierXdos, 1.1)) {  // Obstáculo inferior 2
+      return true; // Hay colisión
     }
 
-    return false;
+    return false; // No hay colisión
   }
 
- 
+  // Método para verificar la puntuación
+  void _checkScore() {
+    if ((barrierXuno < -birdWidth / 2 && barrierXuno > -birdWidth / 2 - 0.05) ||
+        (barrierXdos < -birdWidth / 2 && barrierXdos > -birdWidth / 2 - 0.05)) {
+      setState(() {
+        puntuacion++; //Se incrementa la puntuación si se pasa un obstáculo
+      });
+    }
+  }
+
+  // Método para iniciar el juego
   void startGame() {
     gameHasStarted = true;
     Timer.periodic(Duration(milliseconds: 60), (timer) {
       time += 0.05;
-      height = -4.9 * time * time + 2.8 * time;
+      height = -4.9 * time * time + 2.8 * time; //Calcula la trayectoria del pajaro
       setState(() {
-        birdYaxis = initialHeight - height;
-        
+        birdYaxis = initialHeight - height; //Actualiza la posición del pajaro
+        // Movimiento de los obstáculos
         if (barrierXuno < -2) {
           barrierXuno += 3.5;
         } else {
@@ -87,27 +97,31 @@ class _HomepageState extends State<Homepage> {
         }
       });
 
+      // Verificar puntuación
+      _checkScore();
 
       // Verificar colisión
       if (checkCollision() || birdYaxis > 1) {
-        timer.cancel();
+        timer.cancel(); //Detiene el juego
         gameHasStarted = false;
-        showGameOver();
+        showGameOver(); //Muestra el mensaje de juego terminado
       }
     });
   }
 
+  // Método para mostrar el mensaje de "Juego terminado"
   void showGameOver() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Center(child: Text("JUEGO TERMINADO")),
+          title: Center(child: Text("JUEGO TERMINADO")), //Mensaje de juego terminado
+          content: Text("Puntuación: $puntuacion", textAlign: TextAlign.center), //Mostrar la puntuación
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                resetGame();
+                resetGame(); //Reiniciar el juego
               },
               child: Text("Reintentar"),
             ),
@@ -118,6 +132,7 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  // Método para reiniciar el juego
   void resetGame() {
     setState(() {
       birdYaxis = 0;
@@ -126,17 +141,19 @@ class _HomepageState extends State<Homepage> {
       barrierXuno = 1;
       barrierXdos = barrierXuno + 1.5;
       gameHasStarted = false;
+      puntuacion = 0; // Reiniciar la puntuación
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      // Detecta toques en la pantalla para iniciar el juego o hacer que el pájaro salte
       onTap: () {
         if (gameHasStarted) {
-          jump();
+          jump(); //Si el juego ha comenzado, el pájaro salta
         } else {
-          startGame();
+          startGame(); //Si el juego no ha comenzado, se inicia el juego
         }
       },
       child: Scaffold(
@@ -146,29 +163,32 @@ class _HomepageState extends State<Homepage> {
               flex: 2,
               child: Stack(
                 children: [
+                  // Fondo del cielo con el pájaro animado
                   AnimatedContainer(
                     alignment: Alignment(0, birdYaxis),
                     duration: Duration(milliseconds: 0),
-                    color: Colors.blue,
-                    child: MyBird(),
+                    color: Colors.blue, //Color del cielo
+                    child: MyBird(), //Añade el pájaro al fondo del cielo
                   ),
+                  // Mensaje inicial antes de que comience el juego
                   Container(
                     alignment: Alignment(-0.3, -0.3),
                     child: gameHasStarted
                         ? Text("")
                         : Text(
-                            "PULSA PARA JUGAR",
+                            "PULSA PARA JUGAR", //Mensaje de inicio
                             style: TextStyle(
-                              fontSize: 25,
-                              color: Colors.white,
+                              fontSize: 25, //Tamaño del texto
+                              color: Colors.white, //Color del texto
                             ),
                           ),
                   ),
+                  // Barreras animadas que se mueven de derecha a izquierda
                   AnimatedContainer(
-                    alignment: Alignment(barrierXuno, -1.1),
-                    duration: Duration(milliseconds: 0),
+                    alignment: Alignment(barrierXuno, -1.1), //Posición de la barrera superior
+                    duration: Duration(milliseconds: 0), //Duración de la animación
                     child: MyBarrier(
-                      size: 200.0,
+                      size: 200.0, //Tamaño de la barrera
                     ),
                   ),
                   AnimatedContainer(
@@ -182,7 +202,7 @@ class _HomepageState extends State<Homepage> {
                     alignment: Alignment(barrierXdos, 1.1),
                     duration: Duration(milliseconds: 0),
                     child: MyBarrier(
-                      size: 150.0,
+                      size: 150.0, 
                     ),
                   ),
                   AnimatedContainer(
@@ -191,19 +211,33 @@ class _HomepageState extends State<Homepage> {
                     child: MyBarrier(
                       size: 250.0,
                     ),
-                  ),                 
+                  ),
+                  // Mostrar la puntuación
+                  Positioned(
+                    top: 50, //Posición de la puntuación
+                    right: 20, //Posición de la puntuación
+                    child: Text(
+                      'Puntuación: $puntuacion', //Texto de la puntuación
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.white, //Color del texto
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
+            // Suelo del juego
             Container(
-              height: 15,
-              color: Colors.green,
+              height: 15, //Altura del suelo
+              color: Colors.green, //Color del suelo
             ),
+            // Base marrón inferior del juego
             Expanded(
               child: Container(
-                color: Colors.brown,
+                color: Colors.brown, //Color de la base
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly, //Espacio entre los elementos
                 ),
               ),
             ),
